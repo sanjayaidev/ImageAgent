@@ -1,0 +1,336 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Getting Started — SanjayAIHub</title>
+<style>
+  :root{
+    --bg:#fbf9f5;
+    --card:#ffffff;
+    --ink:#2b2620;
+    --sub:#6b6558;
+    --line:#e7e1d5;
+    --accent:#c05a3c;
+    --accent-soft:#f4e2da;
+    --good:#3f7d5c;
+    --good-soft:#e2f0e7;
+    --warn:#c98a2c;
+    --warn-soft:#faeed4;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:var(--sans);
+    font-size:16px;
+    line-height:1.65;
+  }
+  .wrap{max-width:760px;margin:0 auto;padding:32px 20px 100px;}
+
+  header{
+    display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;
+    padding-bottom:20px;margin-bottom:8px;border-bottom:2px solid var(--line);
+  }
+  header .brand{font-size:20px;font-weight:700;}
+  header .brand span{color:var(--accent);}
+  header a.back{
+    color:var(--accent);text-decoration:none;font-size:14px;font-weight:600;
+    border:1.5px solid var(--accent);padding:8px 14px;border-radius:20px;white-space:nowrap;
+  }
+  header a.back:hover{background:var(--accent);color:#fff;}
+
+  .hero{padding:26px 0 10px;}
+  .hero h1{font-size:30px;margin:0 0 10px;line-height:1.25;}
+  .hero p{color:var(--sub);font-size:17px;margin:0;}
+
+  nav.toc{
+    display:flex;flex-wrap:wrap;gap:8px;margin:26px 0 40px;
+  }
+  nav.toc a{
+    text-decoration:none;color:var(--ink);background:var(--card);border:1px solid var(--line);
+    padding:9px 14px;border-radius:20px;font-size:13.5px;font-weight:600;
+  }
+  nav.toc a:hover{border-color:var(--accent);color:var(--accent);}
+
+  section{margin-bottom:48px;scroll-margin-top:20px;}
+  .eyebrow{color:var(--accent);font-weight:700;font-size:13px;letter-spacing:.04em;text-transform:uppercase;margin-bottom:6px;}
+  h2{font-size:23px;margin:0 0 14px;}
+  h3{font-size:16px;margin:20px 0 8px;}
+  p{color:#4a4438;margin:0 0 14px;}
+  strong{color:var(--ink);}
+
+  .box{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px 22px;margin:16px 0;}
+  .box.tip{background:var(--good-soft);border-color:#c9e2d3;}
+  .box.tip .label{color:var(--good);}
+  .box.warn{background:var(--warn-soft);border-color:#efd9a8;}
+  .box.warn .label{color:var(--warn);}
+  .box .label{font-weight:700;font-size:13px;text-transform:uppercase;letter-spacing:.03em;margin-bottom:6px;display:flex;align-items:center;gap:6px;}
+  .box p{margin:0;color:#4a4438;}
+  .box p + p{margin-top:8px;}
+
+  .analogy{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:18px 0;}
+  @media (max-width:600px){.analogy{grid-template-columns:1fr;}}
+  .analogy .card{
+    background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 20px;
+  }
+  .analogy .card .icon{font-size:26px;margin-bottom:8px;display:block;}
+  .analogy .card h4{margin:0 0 6px;font-size:16px;}
+  .analogy .card p{margin:0;font-size:14.5px;color:var(--sub);}
+
+  table{width:100%;border-collapse:collapse;margin:16px 0;background:var(--card);border-radius:12px;overflow:hidden;border:1px solid var(--line);}
+  th,td{padding:12px 14px;text-align:left;font-size:14.5px;vertical-align:top;}
+  th{background:#f3efe6;font-size:12.5px;text-transform:uppercase;letter-spacing:.03em;color:var(--sub);}
+  td{border-top:1px solid var(--line);color:#4a4438;}
+  tr:hover td{background:#faf7f0;}
+
+  .pill{display:inline-block;font-size:11.5px;font-weight:700;padding:3px 10px;border-radius:20px;margin-left:6px;vertical-align:middle;white-space:nowrap;}
+  .pill.good{background:var(--good-soft);color:var(--good);}
+  .pill.warn{background:var(--warn-soft);color:var(--warn);}
+  .pill.accent{background:var(--accent-soft);color:var(--accent);}
+
+  .steps{list-style:none;margin:16px 0;padding:0;counter-reset:step;}
+  .steps li{
+    display:flex;gap:14px;padding:14px 0;border-bottom:1px solid var(--line);
+  }
+  .steps li:last-child{border-bottom:none;}
+  .steps li::before{
+    counter-increment:step;content:counter(step);flex-shrink:0;
+    width:30px;height:30px;border-radius:50%;background:var(--accent);color:#fff;
+    display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;
+  }
+  .steps li div strong{display:block;font-size:15.5px;margin-bottom:2px;}
+  .steps li div span{color:var(--sub);font-size:14px;}
+
+  .faq-item{border-bottom:1px solid var(--line);padding:16px 0;}
+  .faq-item:last-child{border-bottom:none;}
+  .faq-item .q{font-weight:700;font-size:15.5px;margin-bottom:6px;}
+  .faq-item .a{color:var(--sub);font-size:14.5px;margin:0;}
+
+  footer{border-top:1px solid var(--line);padding-top:20px;margin-top:56px;color:#9c9585;font-size:12.5px;text-align:center;}
+
+  code{background:#f3efe6;color:#8a5230;padding:2px 6px;border-radius:5px;font-size:13px;font-family:ui-monospace, monospace;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="brand">Sanjay<span>AIHub</span></div>
+    <a class="back" href="index.html">← Back to the app</a>
+  </header>
+
+  <div class="hero">
+    <h1>New to this? Start here 👋</h1>
+    <p>This page explains — in plain, everyday language — how this app works and how it's different from ChatGPT or Gemini. Takes about 5 minutes to read.</p>
+  </div>
+
+  <nav class="toc">
+    <a href="#basics">The basics</a>
+    <a href="#different">How it's different</a>
+    <a href="#size">Picking image size &amp; shape</a>
+    <a href="#editing">Editing an image</a>
+    <a href="#providers">Which company to pick</a>
+    <a href="#models">Which model to pick</a>
+    <a href="#workflow">Step-by-step</a>
+    <a href="#faq">Common questions</a>
+  </nav>
+
+  <section id="basics">
+    <div class="eyebrow">First, two words you'll see everywhere</div>
+    <h2>What is a "provider" and what is a "model"?</h2>
+    <p>Before anything else makes sense, you need these two words. Think of it like ordering food:</p>
+
+    <div class="analogy">
+      <div class="card">
+        <span class="icon">🏢</span>
+        <h4>A "provider" is the company</h4>
+        <p>Just like Domino's or Pizza Hut are different pizza companies, <strong>Alibaba, Pixazo, Cloudflare, and Transloadit</strong> are different companies that make AI image tools. Each one runs its own kitchen, so quality, speed, and rules are different.</p>
+      </div>
+      <div class="card">
+        <span class="icon">🍕</span>
+        <h4>A "model" is the specific recipe</h4>
+        <p>Inside one company's menu, there are different items — thin crust, deep dish, stuffed crust. A <strong>model</strong> is the specific AI "recipe" a provider offers. One provider can have several models, each better at different things.</p>
+      </div>
+    </div>
+
+    <div class="box tip">
+      <div class="label">🔑 Why this matters to you</div>
+      <p>This app doesn't force you to use one AI — it lets you choose the company (provider) <strong>and</strong> the specific version (model) for every image. That's more choice than ChatGPT or Gemini give you, but it also means <strong>you</strong> have to make a couple of small decisions they usually make for you.</p>
+    </div>
+  </section>
+
+  <section id="different">
+    <div class="eyebrow">Set expectations</div>
+    <h2>How this is different from ChatGPT or Gemini</h2>
+    <p>ChatGPT and Gemini each give you one built-in image tool. You just type what you want, in one chat box, and it quietly picks the size and style for you.</p>
+    <p>This app is more like a control room with several tools laid out in front of you. That gives you more power, but it means a few things you're used to being "automatic" now need a click from you — especially the size of the image, explained next.</p>
+  </section>
+
+  <section id="size">
+    <div class="eyebrow">The #1 thing that confuses new users</div>
+    <h2>Picking image size &amp; image shape</h2>
+    <p>In ChatGPT or Gemini, you can just type something like "make it tall" or "a wide banner" and it usually figures out the size on its own. <strong>This app does not read size instructions from your text</strong> — you need to set it yourself, using the dropdown menus on the page.</p>
+
+    <h3>Two settings to know</h3>
+    <table>
+      <tr><th>Setting</th><th>In plain words</th><th>Where to set it</th></tr>
+      <tr>
+        <td><strong>Size</strong><br><span style="color:var(--sub);font-size:13px;">(sometimes called "resolution")</span></td>
+        <td>How tall and how wide the picture is, measured in pixels — like <code>1024 height × 1024 width</code>. Bigger numbers = a bigger, more detailed image.</td>
+        <td>A "Height / Width" or "Custom size" option in the form.</td>
+      </tr>
+      <tr>
+        <td><strong>Image shape</strong><br><span style="color:var(--sub);font-size:13px;">(sometimes called "aspect ratio")</span></td>
+        <td>The overall shape of the picture — square, wide (like a TV screen), or tall (like a phone screen).</td>
+        <td>An "Image shape" or "Aspect ratio" dropdown in the form.</td>
+      </tr>
+    </table>
+
+    <div class="box warn">
+      <div class="label">⚠️ Common mistake</div>
+      <p>Typing "make this a tall, phone-shaped picture" in your prompt <strong>will not reliably work</strong>. Instead, leave your prompt describing what's <em>in</em> the picture, and use the Image Shape / Size dropdown on the page to actually set the shape and size.</p>
+    </div>
+
+    <p><strong>Good to know:</strong> not every model lets you type an exact height and width. Some only offer a few ready-made shapes (square, wide, tall) to choose from. If you don't see a "custom size" option, just pick the closest shape from the list — that's normal, not a bug.</p>
+  </section>
+
+  <section id="editing">
+    <div class="eyebrow">Changing an existing picture</div>
+    <h2>Editing an image — which company to use</h2>
+    <p>The Edit tab lets you upload or link a picture and describe a change (e.g. "change the background to a beach"). Two companies offer this: <strong>Alibaba</strong> and <strong>Transloadit</strong>.</p>
+
+    <div class="analogy">
+      <div class="card">
+        <span class="icon">🪫</span>
+        <h4>Alibaba <span class="pill warn">Runs out fast</span></h4>
+        <p>Good quality, but each of its editing tools only lets you make about <strong>10 edits</strong> before it stops working for a while. Fine to try once, not ideal if you're editing the same picture over and over.</p>
+      </div>
+      <div class="card">
+        <span class="icon">🔋</span>
+        <h4>Transloadit <span class="pill good">Recommended</span></h4>
+        <p>Lets you make far more edits without running out. This is the better everyday choice for editing photos.</p>
+      </div>
+    </div>
+
+    <div class="box tip">
+      <div class="label">✅ Simple rule</div>
+      <p>When editing a picture, choose <strong>Transloadit</strong> as your company. Only use Alibaba's editing tools for a quick, one-time test.</p>
+    </div>
+  </section>
+
+  <section id="providers">
+    <div class="eyebrow">Making new pictures from scratch</div>
+    <h2>Which company should I pick to generate an image?</h2>
+    <p>All four companies can create brand-new images from a text description, but they're not equally good at everything:</p>
+
+    <table>
+      <tr><th>Company</th><th>Good for</th><th>Keep in mind</th></tr>
+      <tr>
+        <td><strong>Alibaba</strong> <span class="pill good">Best all-rounder</span></td>
+        <td>The most reliable, good-quality choice for most everyday pictures. A safe default if you're not sure what to pick.</td>
+        <td>Its editing tools (not the picture-making ones) run out quickly — see above.</td>
+      </tr>
+      <tr>
+        <td><strong>Pixazo</strong> <span class="pill accent">Free, for now</span></td>
+        <td>Quick and free to use right now — great for casual experimenting.</td>
+        <td>It's <strong>only free for a limited time</strong>. Don't count on it staying free forever.</td>
+      </tr>
+      <tr>
+        <td><strong>Cloudflare</strong> <span class="pill warn">Avoid for text</span></td>
+        <td>Fast, decent for simple scenes and backgrounds.</td>
+        <td>It's <strong>bad at drawing readable words or letters</strong> inside a picture — signs, labels, and posters often come out as gibberish. Use a different company if your image needs real text in it.</td>
+      </tr>
+      <tr>
+        <td><strong>Transloadit</strong> <span class="pill good">Most flexible</span></td>
+        <td>Gives you access to several extra, well-known AI models under one roof (see below) — great for editing and for images that need clean, readable text.</td>
+        <td>Not every one of its models lets you set an exact height and width — some only offer ready-made shapes.</td>
+      </tr>
+    </table>
+  </section>
+
+  <section id="models">
+    <div class="eyebrow">Inside Transloadit's menu</div>
+    <h2>Which model should I pick? (Transloadit)</h2>
+    <p>Transloadit doesn't build its own AI — instead it gives you a menu of well-known AI models from other companies. Two of them are ones you may already recognize:</p>
+
+    <table>
+      <tr><th>Model name in the app</th><th>What it really is</th><th>Pick it when…</th></tr>
+      <tr>
+        <td><code>google/nano-banana</code> (and the "2" / "pro" versions)</td>
+        <td>This is <strong>Google's own picture-making AI</strong> — the same technology behind Gemini's image tool.</td>
+        <td>You want results that look and feel like what Gemini would give you.</td>
+      </tr>
+      <tr>
+        <td><code>openai/gpt-image-2</code></td>
+        <td>This is <strong>OpenAI's</strong> picture-making AI — the same one used inside ChatGPT.</td>
+        <td>You want ChatGPT-style results, and especially when you need <strong>clean, readable text</strong> inside the picture (posters, signs, labels).</td>
+      </tr>
+      <tr>
+        <td><code>flux</code> models</td>
+        <td>Made by a separate company called Black Forest Labs — not Google or OpenAI.</td>
+        <td>You want photo-realistic detail (the "Pro" version) or a fast, quick draft (the "Schnell" version).</td>
+      </tr>
+      <tr>
+        <td><code>recraft-v3</code></td>
+        <td>Made by Recraft — known for clean, flat, design-style pictures.</td>
+        <td>You want logos, icons, or simple flat illustrations rather than realistic photos.</td>
+      </tr>
+    </table>
+
+    <div class="box tip">
+      <div class="label">💡 Easy way to remember</div>
+      <p>Want it to look like <strong>Gemini</strong> made it? Pick a <strong>nano-banana</strong> model.<br>Want it to look like <strong>ChatGPT</strong> made it? Pick <strong>gpt-image-2</strong>.<br>Everything else on the list is its own separate AI, not a copy of a chatbot.</p>
+    </div>
+  </section>
+
+  <section id="workflow">
+    <div class="eyebrow">Putting it together</div>
+    <h2>A simple first-time walkthrough</h2>
+    <ol class="steps">
+      <li><div><strong>Go to the "Generate" tab and pick Alibaba as the company.</strong><span>It's a safe, good-quality default. Describe what you want in plain words — subject, setting, mood.</span></div></li>
+      <li><div><strong>Set your image size and shape before pressing the button.</strong><span>Don't type it into your description — use the dropdowns.</span></div></li>
+      <li><div><strong>Want to change an existing picture?</strong><span>Go to "Edit," choose Transloadit as the company, pick a nano-banana model or gpt-image-2, then upload or link your picture.</span></div></li>
+      <li><div><strong>Need readable words inside the picture?</strong><span>Use Transloadit's gpt-image-2 model — not Cloudflare.</span></div></li>
+      <li><div><strong>Just want to play around for free?</strong><span>Try Pixazo while it's still free, or Cloudflare for pictures that don't need text.</span></div></li>
+      <li><div><strong>Like a prompt you wrote?</strong><span>Use the "Save prompt" button so you can reuse it later instead of retyping.</span></div></li>
+    </ol>
+  </section>
+
+  <section id="faq">
+    <div class="eyebrow">Quick answers</div>
+    <h2>Common questions</h2>
+
+    <div class="faq-item">
+      <div class="q">Why did my picture come out the wrong shape?</div>
+      <p class="a">You probably described the shape in your text instead of setting it in the dropdown. Set the "Image shape" or "Size" option on the page, not in your prompt.</p>
+    </div>
+    <div class="faq-item">
+      <div class="q">Why did editing suddenly stop working?</div>
+      <p class="a">If you were using Alibaba, you likely used up its ~10 free edits for that model. Switch to Transloadit and keep going.</p>
+    </div>
+    <div class="faq-item">
+      <div class="q">Why does the text/writing in my picture look like gibberish?</div>
+      <p class="a">You're probably using Cloudflare, which struggles with lettering. Switch to Alibaba, or Transloadit's gpt-image-2 for the cleanest text.</p>
+    </div>
+    <div class="faq-item">
+      <div class="q">Is this the same as ChatGPT or Gemini's image tool?</div>
+      <p class="a">Not exactly — this app is a control panel that connects to several different companies. Two of the models it offers (nano-banana and gpt-image-2) happen to be the very same AI used by Gemini and ChatGPT. The rest are separate AI tools with their own strengths.</p>
+    </div>
+    <div class="faq-item">
+      <div class="q">Will Pixazo always be free?</div>
+      <p class="a">No — its free access is temporary. Don't rely on it staying free long-term.</p>
+    </div>
+    <div class="faq-item">
+      <div class="q">Do I need to log in or have my own API key?</div>
+      <p class="a">No. The app is ready to use as-is — no login and no personal API key needed.</p>
+    </div>
+  </section>
+
+  <footer>SanjayAIHub — Guide · keep this page saved next to the main app for quick reference</footer>
+
+</div>
+</body>
+</html>

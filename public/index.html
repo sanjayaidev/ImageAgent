@@ -1,0 +1,2037 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>SanjayAIHub — AI Console</title>
+<style>
+  :root{
+    --ink:#151312;
+    --paper:#efe9df;
+    --paper-dim:#e2dbcd;
+    --line:#c9c0ac;
+    --safelight:#b5482f;
+    --safelight-dim:#8a3722;
+    --developer:#3f5c4c;
+    --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    --serif: "Georgia", "Iowan Old Style", serif;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--ink);
+    color:var(--paper);
+    font-family:var(--mono);
+    font-size:14px;
+    line-height:1.5;
+    min-height:100vh;
+  }
+  .wrap{max-width:1020px;margin:0 auto;padding:28px 20px 80px;}
+
+  header{display:flex;align-items:baseline;justify-content:space-between;border-bottom:1px solid #3a3632;padding-bottom:18px;margin-bottom:28px;}
+  header .brand{font-family:var(--serif);font-size:26px;letter-spacing:0.5px;color:var(--paper);}
+  header .brand em{color:var(--safelight);font-style:normal;}
+  header .tag{color:#8a8378;font-size:12px;text-transform:uppercase;letter-spacing:0.14em;}
+
+  nav{display:flex;gap:2px;margin-bottom:22px;background:#211f1c;border:1px solid #3a3632;padding:3px;border-radius:3px;width:fit-content;flex-wrap:wrap;}
+  nav button{
+    appearance:none;border:none;background:transparent;color:#a39c8f;
+    font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;
+    padding:9px 18px;cursor:pointer;border-radius:2px;transition:all .2s;
+  }
+  nav button:hover{color:var(--paper);}
+  nav button.active{background:var(--safelight);color:#fff;}
+
+  .panel{display:none;}
+  .panel.active{display:block;}
+
+  /* ── Shared form styles ── */
+  label{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:#8a8378;margin:14px 0 6px;}
+  label:first-child{margin-top:0;}
+  textarea,input[type=text],input[type=number],select{
+    width:100%;background:var(--paper);color:var(--ink);border:1px solid var(--line);
+    border-radius:2px;padding:10px 12px;font-family:var(--mono);font-size:13px;
+  }
+  textarea{min-height:74px;resize:vertical;}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  @media (max-width:640px){.row{grid-template-columns:1fr;}}
+
+  .section-label{font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:#5c574e;margin:22px 0 8px;border-top:1px solid #2a2723;padding-top:16px;}
+
+  button.go{
+    margin-top:20px;appearance:none;border:1px solid var(--safelight);background:var(--safelight);
+    color:#fff;font-family:var(--mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;
+    padding:12px 22px;border-radius:2px;cursor:pointer;transition:all .2s;
+  }
+  button.go:hover{background:var(--safelight-dim);}
+  button.go:disabled{opacity:.5;cursor:default;}
+
+  button.save-prompt{
+    margin-top:8px;appearance:none;border:1px solid var(--developer);background:transparent;
+    color:var(--developer);font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;
+    padding:7px 14px;border-radius:2px;cursor:pointer;transition:all .2s;
+  }
+  button.save-prompt:hover{background:var(--developer);color:#fff;}
+
+  .status{margin-top:14px;font-size:12px;color:#a39c8f;min-height:16px;}
+  .status.err{color:var(--safelight);}
+  .status.ok{color:var(--developer);}
+
+  .result{margin-top:22px;display:none;border:1px solid #3a3632;padding:14px;border-radius:3px;background:#1a1815;}
+  .result.show{display:block;}
+  .result img{width:100%;max-width:420px;display:block;border:1px solid #3a3632;margin-bottom:10px;}
+  .result .meta{font-size:11px;color:#8a8378;}
+  .result a{color:var(--developer);}
+  .result-actions{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;}
+  .result-actions button{
+    appearance:none;border:1px solid var(--developer);background:var(--developer);
+    color:#fff;font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;
+    padding:8px 14px;border-radius:2px;cursor:pointer;transition:all .2s;
+  }
+  .result-actions button:hover{opacity:0.9;}
+  .result-actions button.secondary{
+    background:transparent;border-color:#5c574e;color:#a39c8f;
+  }
+  .result-actions button.secondary:hover{border-color:var(--paper);color:var(--paper);}
+
+  /* ── CHAT PANEL ── */
+  .chat-container {
+    background: #1a1815;
+    border: 1px solid #3a3632;
+    border-radius: 4px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    height: 520px;
+  }
+
+  .chat-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 18px;
+    border-bottom: 1px solid #2a2723;
+    background: #1f1d1a;
+    flex-shrink: 0;
+  }
+
+  .chat-header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .chat-status-badge {
+    font-size: 10px;
+    color: #5c574e;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .chat-status-badge.online {
+    color: var(--developer);
+  }
+
+  .chat-log {
+    flex: 1;
+    overflow-y: auto;
+    padding: 18px 20px;
+    background: #151312;
+  }
+
+  .chat-log::-webkit-scrollbar {
+    width: 5px;
+  }
+  .chat-log::-webkit-scrollbar-track {
+    background: #1a1815;
+  }
+  .chat-log::-webkit-scrollbar-thumb {
+    background: #3a3632;
+    border-radius: 3px;
+  }
+  .chat-log::-webkit-scrollbar-thumb:hover {
+    background: #5c574e;
+  }
+
+  .msg {
+    margin-bottom: 18px;
+    animation: fadeIn 0.3s ease;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .msg .who {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #8a8378;
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .msg .who .avatar {
+    display: inline-block;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: #2a2723;
+    text-align: center;
+    line-height: 22px;
+    font-size: 11px;
+  }
+
+  .msg.user .who .avatar {
+    background: var(--developer);
+    color: #fff;
+  }
+  .msg.assistant .who .avatar {
+    background: var(--safelight);
+    color: #fff;
+  }
+
+  .msg.user .who { color: var(--developer); }
+  .msg.assistant .who { color: var(--safelight); }
+
+  .msg .body {
+    color: var(--paper);
+    white-space: pre-wrap;
+    font-family: var(--serif);
+    font-size: 14.5px;
+    padding-left: 30px;
+    line-height: 1.6;
+  }
+
+  .msg .body .code-block {
+    background: #1a1815;
+    border: 1px solid #2a2723;
+    border-radius: 3px;
+    padding: 10px 14px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: #c9c0ac;
+    margin: 8px 0;
+    overflow-x: auto;
+    white-space: pre;
+  }
+
+  .chat-input-area {
+    padding: 14px 18px;
+    border-top: 1px solid #2a2723;
+    background: #1f1d1a;
+    display: flex;
+    gap: 10px;
+    align-items: flex-end;
+    flex-shrink: 0;
+  }
+
+  .chat-input-area textarea {
+    flex: 1;
+    background: var(--ink);
+    color: var(--paper);
+    border: 1px solid #3a3632;
+    border-radius: 3px;
+    padding: 10px 14px;
+    font-family: var(--mono);
+    font-size: 13px;
+    min-height: 48px;
+    max-height: 120px;
+    resize: vertical;
+    transition: border-color 0.2s;
+  }
+
+  .chat-input-area textarea:focus {
+    outline: none;
+    border-color: var(--safelight);
+  }
+
+  .chat-input-area .chat-send-btn {
+    background: var(--safelight);
+    border: none;
+    color: #fff;
+    font-family: var(--mono);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 10px 20px;
+    border-radius: 3px;
+    cursor: pointer;
+    height: 48px;
+    white-space: nowrap;
+    transition: background 0.2s;
+  }
+
+  .chat-input-area .chat-send-btn:hover {
+    background: var(--safelight-dim);
+  }
+  .chat-input-area .chat-send-btn:disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
+
+  .chat-empty {
+    color: #5c574e;
+    text-align: center;
+    padding: 40px 20px;
+    font-size: 13px;
+    font-family: var(--serif);
+  }
+
+  .chat-empty .empty-icon {
+    font-size: 32px;
+    margin-bottom: 12px;
+    display: block;
+  }
+  .chat-empty .empty-hint {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: #5c574e;
+    margin-top: 8px;
+  }
+
+  .typing-indicator {
+    display: none;
+    padding: 8px 0 8px 28px;
+    color: #8a8378;
+    font-size: 12px;
+    font-family: var(--serif);
+    font-style: italic;
+  }
+  .typing-indicator.show { display: block; }
+
+  .msg-time {
+    font-size: 9px;
+    color: #5c574e;
+    margin-left: 8px;
+  }
+
+  /* ── PROMPT GENERATOR PANEL ── */
+  #panel-promptgen {
+    max-width: 100%;
+  }
+
+  .promptgen-tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 20px;
+    background: #211f1c;
+    padding: 3px;
+    border-radius: 3px;
+    border: 1px solid #3a3632;
+    width: fit-content;
+  }
+
+  .promptgen-tabs button {
+    appearance: none;
+    border: none;
+    background: transparent;
+    color: #a39c8f;
+    font-family: var(--mono);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 8px 16px;
+    cursor: pointer;
+    border-radius: 2px;
+    transition: all 0.2s;
+  }
+
+  .promptgen-tabs button.active {
+    background: var(--developer);
+    color: #fff;
+  }
+  .promptgen-tabs button:hover:not(.active) {
+    color: var(--paper);
+  }
+
+  .promptgen-tab-content {
+    display: none;
+  }
+  .promptgen-tab-content.active {
+    display: block;
+  }
+
+  /* Generate Tab */
+  .promptgen-generate-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+
+  @media (max-width: 768px) {
+    .promptgen-generate-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .promptgen-selector-section {
+    background: #1a1815;
+    border: 1px solid #3a3632;
+    border-radius: 4px;
+    padding: 18px 20px;
+  }
+
+  .promptgen-selector-section .section-title {
+    font-family: var(--serif);
+    font-size: 15px;
+    color: var(--paper);
+    margin-bottom: 14px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #2a2723;
+  }
+
+  .promptgen-selector-section .field-group {
+    margin-bottom: 14px;
+  }
+
+  .promptgen-selector-section .field-group label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #5c574e;
+    margin: 0 0 4px 0;
+  }
+
+  .promptgen-selector-section select {
+    background: var(--ink);
+    color: var(--paper);
+    border: 1px solid #3a3632;
+    padding: 8px 10px;
+    font-size: 12px;
+  }
+
+  .promptgen-selector-section select option {
+    background: var(--ink);
+  }
+
+  .promptgen-tags-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 6px;
+  }
+
+  .promptgen-tag {
+    background: #2a2723;
+    color: #a39c8f;
+    font-size: 10px;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-family: var(--mono);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: all 0.2s;
+    user-select: none;
+  }
+
+  .promptgen-tag:hover {
+    border-color: #5c574e;
+  }
+
+  .promptgen-tag.active {
+    background: var(--safelight);
+    color: #fff;
+    border-color: var(--safelight);
+  }
+
+  .promptgen-output-section {
+    background: #1a1815;
+    border: 1px solid #3a3632;
+    border-radius: 4px;
+    padding: 18px 20px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .promptgen-output-section .section-title {
+    font-family: var(--serif);
+    font-size: 15px;
+    color: var(--paper);
+    margin-bottom: 14px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #2a2723;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .promptgen-output-section .section-title .char-count {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: #5c574e;
+  }
+
+  .prompt-preview {
+    flex: 1;
+    background: #151312;
+    border: 1px solid #2a2723;
+    border-radius: 3px;
+    padding: 16px 18px;
+    min-height: 200px;
+    color: var(--paper);
+    font-family: var(--serif);
+    font-size: 14.5px;
+    line-height: 1.7;
+    white-space: pre-wrap;
+    overflow-y: auto;
+  }
+
+  .prompt-preview.empty {
+    color: #5c574e;
+    font-family: var(--mono);
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+  }
+
+  .promptgen-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 16px;
+    flex-wrap: wrap;
+  }
+
+  .promptgen-actions button {
+    appearance: none;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 9px 20px;
+    border-radius: 2px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .promptgen-actions .btn-generate {
+    background: var(--developer);
+    border: 1px solid var(--developer);
+    color: #fff;
+  }
+  .promptgen-actions .btn-generate:hover {
+    opacity: 0.9;
+  }
+  .promptgen-actions .btn-copy {
+    background: transparent;
+    border: 1px solid #5c574e;
+    color: #a39c8f;
+  }
+  .promptgen-actions .btn-copy:hover {
+    border-color: var(--paper);
+    color: var(--paper);
+  }
+  .promptgen-actions .btn-clear {
+    background: transparent;
+    border: 1px solid transparent;
+    color: #5c574e;
+  }
+  .promptgen-actions .btn-clear:hover {
+    color: var(--safelight);
+  }
+  .promptgen-actions .btn-use {
+    background: var(--safelight);
+    border: 1px solid var(--safelight);
+    color: #fff;
+  }
+  .promptgen-actions .btn-use:hover {
+    background: var(--safelight-dim);
+  }
+
+  /* Manage Data Tab */
+  .manage-data-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 16px;
+  }
+
+  @media (max-width: 768px) {
+    .manage-data-grid {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+  @media (max-width: 480px) {
+    .manage-data-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .data-category-card {
+    background: #1a1815;
+    border: 1px solid #3a3632;
+    border-radius: 4px;
+    padding: 14px 16px;
+  }
+
+  .data-category-card .card-title {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #a39c8f;
+    margin-bottom: 10px;
+    font-weight: normal;
+  }
+
+  .data-category-card .add-row {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 10px;
+  }
+
+  .data-category-card .add-row input {
+    flex: 1;
+    padding: 6px 8px;
+    font-size: 12px;
+    background: var(--ink);
+    color: var(--paper);
+    border: 1px solid #3a3632;
+    border-radius: 2px;
+    font-family: var(--mono);
+  }
+
+  .data-category-card .add-row input:focus {
+    outline: none;
+    border-color: var(--safelight);
+  }
+
+  .data-category-card .add-row button {
+    background: var(--developer);
+    border: none;
+    color: #fff;
+    padding: 6px 12px;
+    font-family: var(--mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-radius: 2px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .data-category-card .add-row button:hover {
+    opacity: 0.9;
+  }
+
+  .data-items {
+    max-height: 200px;
+    overflow-y: auto;
+  }
+
+  .data-items::-webkit-scrollbar {
+    width: 4px;
+  }
+  .data-items::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .data-items::-webkit-scrollbar-thumb {
+    background: #3a3632;
+    border-radius: 2px;
+  }
+
+  .data-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 6px;
+    border-bottom: 1px solid #2a2723;
+    font-size: 12px;
+    color: var(--paper);
+  }
+
+  .data-item .item-value {
+    font-family: var(--serif);
+  }
+
+  .data-item .item-delete {
+    background: transparent;
+    border: none;
+    color: #5c574e;
+    cursor: pointer;
+    font-size: 14px;
+    padding: 2px 6px;
+    transition: color 0.2s;
+  }
+  .data-item .item-delete:hover {
+    color: var(--safelight);
+  }
+
+  .data-empty {
+    color: #5c574e;
+    font-size: 11px;
+    padding: 12px 0;
+    text-align: center;
+  }
+
+  /* ── FILMSTRIP ── */
+  .filmstrip{margin-top:36px;}
+  .filmstrip h2{font-family:var(--serif);font-size:16px;font-weight:normal;color:#a39c8f;margin-bottom:12px;}
+  .frames{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;}
+  .frame{border:1px solid #3a3632;background:#1a1815;border-radius:2px;overflow:hidden;position:relative;}
+  .frame img{width:100%;aspect-ratio:1;object-fit:cover;display:block;}
+  .frame .tag{position:absolute;top:0;left:0;background:rgba(0,0,0,.7);color:#c9c0ac;font-size:9px;padding:2px 5px;letter-spacing:.05em;text-transform:uppercase;}
+  .frame .actions{position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,.85);display:flex;gap:4px;padding:6px;justify-content:center;opacity:0;transition:opacity .2s;}
+  .frame:hover .actions{opacity:1;}
+  .frame .actions button{background:var(--developer);border:none;color:#fff;font-size:9px;padding:4px 8px;border-radius:2px;cursor:pointer;font-family:var(--mono);text-transform:uppercase;}
+  .frame .actions button.view-btn{background:#5c574e;}
+  .empty{color:#5c574e;font-size:12px;padding:20px 0;}
+  .frame-prompt{font-size:9px;color:#8a8378;padding:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+
+  /* ── MODAL ── */
+  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.8);display:none;align-items:center;justify-content:center;z-index:1000;}
+  .modal-overlay.show{display:flex;}
+  .modal-content{background:#1a1815;border:1px solid #3a3632;border-radius:4px;padding:20px;max-width:90vw;max-height:90vh;overflow:auto;position:relative;}
+  .modal-close{position:absolute;top:10px;right:10px;background:transparent;border:none;color:#a39c8f;font-size:20px;cursor:pointer;}
+  .modal-image{max-width:100%;max-height:70vh;display:block;margin-bottom:14px;}
+  .modal-prompt{font-family:var(--serif);font-size:14px;color:var(--paper);margin-bottom:14px;line-height:1.5;}
+  .modal-meta{font-size:11px;color:#8a8378;margin-bottom:14px;}
+  .modal-actions{display:flex;gap:8px;flex-wrap:wrap;}
+  .modal-actions button{appearance:none;border:1px solid var(--developer);background:var(--developer);color:#fff;font-family:var(--mono);font-size:11px;padding:8px 14px;border-radius:2px;cursor:pointer;}
+
+  /* ── TOAST ── */
+  .copy-feedback{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--developer);color:#fff;padding:8px 16px;border-radius:4px;font-size:12px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:1001;}
+  .copy-feedback.show{opacity:1;}
+
+  .hint{color:#5c574e;font-size:11px;margin-top:6px;}
+  .billing-summary{display:flex;gap:14px;flex-wrap:wrap;}
+  .billing-stat{flex:1 1 160px;border:1px solid #3a3632;border-radius:3px;padding:12px 14px;background:#14120f;}
+  .billing-stat-label{font-size:10px;letter-spacing:.04em;text-transform:uppercase;color:#8a8378;margin-bottom:6px;}
+  .billing-stat-value{font-family:var(--serif);font-size:20px;color:var(--paper);}
+  .billing-table{width:100%;border-collapse:collapse;margin-top:10px;font-size:12px;}
+  .billing-table th{text-align:left;color:#8a8378;font-weight:normal;font-size:10px;letter-spacing:.04em;text-transform:uppercase;padding:6px 8px;border-bottom:1px solid #3a3632;}
+  .billing-table td{padding:6px 8px;border-bottom:1px solid #26221e;color:#c9c3b8;}
+  .billing-table tr:last-child td{border-bottom:none;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="brand">Sanjay<em>AIHub</em></div>
+    <div class="tag">image lab · no login</div>
+  </header>
+
+  <nav>
+    <button data-panel="agent" class="active">Agent</button>
+    <button data-panel="generate">Generate</button>
+    <button data-panel="edit">Edit</button>
+    <button data-panel="chat">Chat</button>
+    <button data-panel="promptgen">Prompt Gen</button>
+    <button data-panel="billing">Billing</button>
+  </nav>
+
+  <!-- AGENT -->
+  <section class="panel active" id="panel-agent">
+    <label>Prompt <span class="hint">(type the size right into the sentence — pixels, aspect ratio, or a real-world size like "7x4 feet", "8.5x11 inch", "50x70cm" — e.g. "a lighthouse at dusk, 16:9" or "a poster of a fox, 7x4 feet, gpt image")</span></label>
+    <textarea id="agent-prompt" placeholder="A neon-lit street market at night, rain-slicked pavement reflecting signage, 7x4 feet poster"></textarea>
+
+    <button class="go" id="agent-go">✨ Let the agent figure it out</button>
+    <div class="status" id="agent-status"></div>
+    <div class="result" id="agent-result">
+      <img id="agent-img" />
+      <div class="meta" id="agent-meta"></div>
+      <div class="hint" id="agent-detected" style="margin-top:8px;"></div>
+      <div class="result-actions">
+        <button id="agent-download">Download</button>
+        <button id="agent-copy-prompt" class="secondary">Copy prompt</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- GENERATE -->
+  <section class="panel" id="panel-generate">
+    <label>Saved prompt <span class="hint">(optional — loaded from your prompt library)</span></label>
+    <select id="gen-saved-prompt">
+      <option value="">— pick a saved prompt —</option>
+    </select>
+
+    <label>Prompt</label>
+    <textarea id="gen-prompt" placeholder="A lighthouse at dusk, storm clouds, long exposure, teal and amber palette"></textarea>
+    <button type="button" class="save-prompt" id="gen-save-prompt">💾 Save prompt</button>
+
+    <div class="row">
+      <div>
+        <label>Provider</label>
+        <select id="gen-provider"></select>
+      </div>
+      <div>
+        <label>Model</label>
+        <select id="gen-model"></select>
+      </div>
+    </div>
+
+    <div class="section-label">Parameters</div>
+    <div id="gen-params"></div>
+
+    <button class="go" id="gen-go">Develop image</button>
+    <div class="status" id="gen-status"></div>
+    <div class="result" id="gen-result">
+      <img id="gen-img" />
+      <div class="meta" id="gen-meta"></div>
+      <div class="result-actions">
+        <button id="gen-download">Download</button>
+        <button id="gen-copy-prompt" class="secondary">Copy prompt</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- EDIT -->
+  <section class="panel" id="panel-edit">
+    <label>Source image</label>
+    <div class="row" style="margin-bottom:0;">
+      <div>
+        <input type="text" id="edit-url" placeholder="https://..." />
+      </div>
+      <div style="display:flex;align-items:center;">
+        <span style="color:#8a8378;font-size:12px;margin:0 8px;">or</span>
+        <input type="file" id="edit-file" accept="image/*" style="font-size:12px;" />
+      </div>
+    </div>
+    <div class="hint" id="edit-file-hint" style="display:none;">Using uploaded file: <span id="edit-file-name"></span></div>
+
+    <label>Saved prompt <span class="hint">(optional — loaded from your prompt library)</span></label>
+    <select id="edit-saved-prompt">
+      <option value="">— pick a saved prompt —</option>
+    </select>
+
+    <label>Edit instruction</label>
+    <textarea id="edit-prompt" placeholder="Replace the sky with a starry night, keep everything else unchanged"></textarea>
+    <button type="button" class="save-prompt" id="edit-save-prompt">💾 Save prompt</button>
+
+    <div class="row">
+      <div>
+        <label>Provider</label>
+        <select id="edit-provider"></select>
+      </div>
+      <div>
+        <label>Model</label>
+        <select id="edit-model"></select>
+      </div>
+    </div>
+
+    <div class="section-label">Parameters</div>
+    <div id="edit-params"></div>
+
+    <button class="go" id="edit-go">Develop edit</button>
+    <div class="status" id="edit-status"></div>
+    <div class="result" id="edit-result">
+      <img id="edit-img" />
+      <div class="meta" id="edit-meta"></div>
+      <div class="result-actions">
+        <button id="edit-download">Download</button>
+        <button id="edit-copy-prompt" class="secondary">Copy prompt</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- CHAT -->
+  <section class="panel" id="panel-chat">
+    <div class="chat-container">
+      <div class="chat-header">
+        <div class="chat-header-left">
+          <span style="font-family:var(--serif);font-size:15px;color:var(--paper);">💬 Chat</span>
+        </div>
+        <div>
+          <span class="chat-status-badge online" id="chat-connection-status">● Online</span>
+          <button class="go" id="chat-new" style="margin:0 0 0 12px;padding:6px 14px;font-size:10px;background:transparent;border-color:#5c574e;color:#a39c8f;">New</button>
+        </div>
+      </div>
+
+      <div class="chat-log" id="chat-log">
+        <div class="chat-empty">
+          <span class="empty-icon">💬</span>
+          No messages yet.
+          <div class="empty-hint">Start a conversation with the AI</div>
+        </div>
+      </div>
+
+      <div class="typing-indicator" id="typing-indicator">
+        Assistant is thinking<span class="dots">...</span>
+      </div>
+
+      <div class="chat-input-area">
+        <textarea id="chat-input" placeholder="Type a message..." rows="1"></textarea>
+        <button class="chat-send-btn" id="chat-send">
+          <span class="send-icon">→</span> Send
+        </button>
+      </div>
+    </div>
+    <div class="status" id="chat-status"></div>
+  </section>
+
+  <!-- PROMPT GENERATOR -->
+  <section class="panel" id="panel-promptgen">
+    <div class="promptgen-tabs">
+      <button class="active" data-pg-tab="generate">Generate</button>
+      <button data-pg-tab="manage">Manage Data</button>
+    </div>
+
+    <!-- Generate Tab -->
+    <div class="promptgen-tab-content active" id="pg-tab-generate">
+      <div class="promptgen-generate-grid">
+        <div class="promptgen-selector-section">
+          <div class="section-title">🎨 Select Elements</div>
+
+          <div class="field-group">
+            <label>Subject</label>
+            <select id="pg-subject">
+              <option value="">None</option>
+            </select>
+          </div>
+
+          <div class="field-group">
+            <label>Art Style</label>
+            <select id="pg-style">
+              <option value="">None</option>
+            </select>
+          </div>
+
+          <div class="field-group">
+            <label>Lighting</label>
+            <select id="pg-lighting">
+              <option value="">None</option>
+            </select>
+          </div>
+
+          <div class="field-group">
+            <label>Mood</label>
+            <select id="pg-mood">
+              <option value="">None</option>
+            </select>
+          </div>
+
+          <div class="field-group">
+            <label>Additional Details</label>
+            <input type="text" id="pg-details" placeholder="e.g., misty atmosphere, reflections, blooming flowers..." />
+          </div>
+        </div>
+
+        <div class="promptgen-output-section">
+          <div class="section-title">
+            Generated Prompt
+            <span class="char-count" id="pg-char-count">0 characters</span>
+          </div>
+          <div class="prompt-preview empty" id="pg-preview">
+            <span>Select your options and click<br><strong>✨ Generate Prompt</strong></span>
+          </div>
+
+          <div class="promptgen-tags-container" id="pg-tags-container">
+            <!-- Tags loaded from DB -->
+          </div>
+
+          <div class="promptgen-actions">
+            <button class="btn-generate" id="pg-generate">✨ Generate</button>
+            <button class="btn-copy" id="pg-copy">📋 Copy</button>
+            <button class="btn-clear" id="pg-clear">✕ Clear</button>
+            <button class="btn-use" id="pg-use">➡️ Use in Generate</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Manage Data Tab -->
+    <div class="promptgen-tab-content" id="pg-tab-manage">
+      <div class="manage-data-grid">
+        <!-- Subjects -->
+        <div class="data-category-card" data-category="subject">
+          <h3 class="card-title">📝 Subjects</h3>
+          <div class="add-row">
+            <input type="text" placeholder="Add new..." class="data-input" />
+            <button class="data-add">Add</button>
+          </div>
+          <div class="data-items" id="data-subjects"></div>
+        </div>
+
+        <!-- Styles -->
+        <div class="data-category-card" data-category="style">
+          <h3 class="card-title">🎨 Styles</h3>
+          <div class="add-row">
+            <input type="text" placeholder="Add new..." class="data-input" />
+            <button class="data-add">Add</button>
+          </div>
+          <div class="data-items" id="data-styles"></div>
+        </div>
+
+        <!-- Lighting -->
+        <div class="data-category-card" data-category="lighting">
+          <h3 class="card-title">💡 Lighting</h3>
+          <div class="add-row">
+            <input type="text" placeholder="Add new..." class="data-input" />
+            <button class="data-add">Add</button>
+          </div>
+          <div class="data-items" id="data-lighting"></div>
+        </div>
+
+        <!-- Moods -->
+        <div class="data-category-card" data-category="mood">
+          <h3 class="card-title">🎭 Moods</h3>
+          <div class="add-row">
+            <input type="text" placeholder="Add new..." class="data-input" />
+            <button class="data-add">Add</button>
+          </div>
+          <div class="data-items" id="data-moods"></div>
+        </div>
+
+        <!-- Tags -->
+        <div class="data-category-card" data-category="tag" style="grid-column: span 2;">
+          <h3 class="card-title">🏷️ Tags</h3>
+          <div class="add-row">
+            <input type="text" placeholder="Add new tag..." class="data-input" />
+            <button class="data-add">Add</button>
+          </div>
+          <div class="data-items" id="data-tags"></div>
+        </div>
+
+        <!-- Saved Prompts (powers the "pick a saved prompt" dropdown on Generate/Edit) -->
+        <div class="data-category-card" id="saved-prompts-card" style="grid-column: span 2;">
+          <h3 class="card-title">💾 Saved Prompts <span class="hint">(shows up in the Generate/Edit "pick a saved prompt" dropdown)</span></h3>
+          <div class="add-row" style="flex-wrap:wrap;">
+            <select id="sp-module" style="flex:0 0 110px;">
+              <option value="generate">Generate</option>
+              <option value="edit">Edit</option>
+            </select>
+            <input type="text" id="sp-headline" placeholder="Short label shown in dropdown..." class="data-input" style="flex:1 1 160px;" />
+          </div>
+          <div class="add-row">
+            <input type="text" id="sp-full-prompt" placeholder="Full prompt text to insert when picked..." class="data-input" />
+            <button class="data-add" id="sp-add">Add</button>
+          </div>
+          <div class="data-items" id="data-saved-prompts"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- BILLING -->
+  <section class="panel" id="panel-billing">
+    <label>Month <span class="hint">(defaults to the current, still-accruing month)</span></label>
+    <div class="row" style="margin-bottom:0;">
+      <div>
+        <input type="month" id="billing-month" />
+      </div>
+      <div style="display:flex;align-items:flex-end;">
+        <button class="go" id="billing-go" style="margin:0;">Check usage</button>
+      </div>
+    </div>
+
+    <div class="status" id="billing-status"></div>
+
+    <div class="result" id="billing-result">
+      <div class="billing-summary">
+        <div class="billing-stat">
+          <div class="billing-stat-label">Total this bill</div>
+          <div class="billing-stat-value" id="billing-total">—</div>
+        </div>
+        <div class="billing-stat">
+          <div class="billing-stat-label">GB used / included</div>
+          <div class="billing-stat-value" id="billing-gb">—</div>
+        </div>
+        <div class="billing-stat">
+          <div class="billing-stat-label">Plan</div>
+          <div class="billing-stat-value" id="billing-plan">—</div>
+        </div>
+      </div>
+      <div class="hint" id="billing-provisional" style="margin-top:6px;"></div>
+
+      <div class="section-label" style="margin-top:18px;">Usage by Robot</div>
+      <table class="billing-table" id="billing-robots-table">
+        <thead><tr><th>Robot</th><th>GB (billed)</th><th>GB (raw)</th></tr></thead>
+        <tbody id="billing-robots-body"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- FILMSTRIP -->
+  <div class="filmstrip">
+    <h2>Contact sheet — recent history</h2>
+    <div class="frames" id="frames"><div class="empty">Nothing developed yet.</div></div>
+  </div>
+
+  <!-- MODAL -->
+  <div class="modal-overlay" id="image-modal">
+    <div class="modal-content">
+      <button class="modal-close" id="modal-close">&times;</button>
+      <img class="modal-image" id="modal-img" />
+      <div class="modal-prompt" id="modal-prompt"></div>
+      <div class="modal-meta" id="modal-meta"></div>
+      <div class="modal-actions">
+        <button id="modal-download">Download</button>
+        <button id="modal-copy-prompt">Copy prompt</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST -->
+  <div class="copy-feedback" id="copy-feedback">Copied!</div>
+
+</div>
+
+<script src="js/adaptive-params.js"></script>
+<script>
+const $ = (id) => document.getElementById(id);
+
+// ── Tabs ──────────────────────────────────────────────
+let billingLoadedOnce = false;
+document.querySelectorAll('nav button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    $('panel-' + btn.dataset.panel).classList.add('active');
+    if (btn.dataset.panel === 'billing' && !billingLoadedOnce) {
+      billingLoadedOnce = true;
+      loadBilling();
+    }
+  });
+});
+
+function setStatus(id, text, kind) {
+  const el = $(id);
+  el.textContent = text || '';
+  el.className = 'status' + (kind ? ' ' + kind : '');
+}
+
+async function api(path, opts) {
+  const res = await fetch(path, opts);
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+  return data;
+}
+
+function fillSelect(select, values, includeNone = true) {
+  select.innerHTML = '';
+  if (includeNone) {
+    const o = document.createElement('option');
+    o.value = '';
+    o.textContent = 'None';
+    select.appendChild(o);
+  }
+  values.forEach(v => {
+    const o = document.createElement('option');
+    o.value = v.id || v.value;
+    o.textContent = v.value;
+    select.appendChild(o);
+  });
+}
+
+// ── Generic provider/model/params controller ──────────────
+// DEBUG: bump this string whenever this file changes, and check it in the
+// browser console — if you don't see this exact line after a hard refresh,
+// the browser/server is serving a stale index.html, not the one you think.
+console.log('[SanjayImageGen] index.html build marker: custom-resolution-debug-1');
+
+function buildPanelController({ providerSelect, modelSelect, paramsEl, catalog }) {
+  let panel = null;
+
+  // DEBUG: dump the full catalog once so you can see in DevTools > Console
+  // exactly what schema the server sent — including whether custom_size /
+  // width / height fields are present for a given model.
+  console.log('[SanjayImageGen] catalog received:', catalog);
+
+  function modelsForProvider(provider) {
+    return catalog.models[provider] || [];
+  }
+
+  function renderModelsFor(provider, preferredModel) {
+    const models = modelsForProvider(provider);
+    fillSelect(modelSelect, models.map(m => ({ id: m, value: m })), false);
+    const defaultModel = catalog.defaults[provider];
+    const useModel = (preferredModel && models.includes(preferredModel)) ? preferredModel : (defaultModel || models[0]);
+    modelSelect.value = useModel;
+    renderParamsFor(useModel);
+  }
+
+  function renderParamsFor(model) {
+    const schema = catalog.schemas[model] || {};
+    // DEBUG: log the schema for whichever model is currently selected,
+    // and explicitly flag whether custom-resolution fields are present.
+    console.log(`[SanjayImageGen] schema for "${model}":`, schema, {
+      hasCustomResolution: Object.prototype.hasOwnProperty.call(schema, 'custom_size'),
+    });
+    if (!panel) panel = window.AdaptiveParams.mount(paramsEl, schema);
+    else panel.setSchema(schema);
+  }
+
+  fillSelect(providerSelect, catalog.providers.map(p => ({ id: p, value: p })), false);
+  providerSelect.value = catalog.defaults.provider || catalog.providers[0];
+  renderModelsFor(providerSelect.value);
+
+  providerSelect.addEventListener('change', () => renderModelsFor(providerSelect.value));
+  modelSelect.addEventListener('change', () => renderParamsFor(modelSelect.value));
+
+  return {
+    getProvider: () => providerSelect.value,
+    getModel: () => modelSelect.value,
+    getParams: () => (panel ? panel.getValues() : {}),
+  };
+}
+
+// ── Saved-prompt dropdown ────────────────────────────────
+// Tracks each wired dropdown so it can be refreshed after the admin panel
+// adds/deletes a saved prompt, without a full page reload.
+const savedPromptDropdowns = [];
+
+async function reloadSavedPromptSelect(select, moduleKey) {
+  try {
+    const rows = await api(`/api/prompts?module=${moduleKey}`);
+    // Keep only the placeholder "— pick a saved prompt —" option, drop the rest.
+    while (select.options.length > 1) select.remove(1);
+    rows.forEach(r => {
+      const o = document.createElement('option');
+      o.value = r.full_prompt;
+      o.textContent = r.headline;
+      select.appendChild(o);
+    });
+  } catch (e) {
+    console.error(e.message);
+  }
+}
+
+async function wireSavedPrompts(selectId, moduleKey, textareaId) {
+  const select = $(selectId);
+  savedPromptDropdowns.push({ select, moduleKey });
+  await reloadSavedPromptSelect(select, moduleKey);
+
+  select.addEventListener('change', () => {
+    if (select.value) $(textareaId).value = select.value;
+  });
+}
+
+function refreshSavedPromptDropdowns() {
+  savedPromptDropdowns.forEach(({ select, moduleKey }) => reloadSavedPromptSelect(select, moduleKey));
+}
+
+// ── Quick "Save prompt" button (next to the prompt box) ──────────────
+async function saveCurrentPrompt(textareaId, moduleKey, buttonEl) {
+  const text = $(textareaId).value.trim();
+  if (!text) {
+    alert('Write a prompt first, then save it.');
+    return;
+  }
+  let name = window.prompt('Save this prompt as (short name, no spaces):');
+  if (name === null) return; // cancelled
+  name = name.trim();
+  if (!name) return;
+  if (/\s/.test(name)) {
+    alert('Name can\u2019t contain spaces \u2014 try underscores or dashes instead, e.g. "cyberpunk_city".');
+    return;
+  }
+
+  const original = buttonEl.textContent;
+  buttonEl.disabled = true;
+  buttonEl.textContent = 'Saving\u2026';
+  try {
+    const row = await api('/api/prompts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ module: moduleKey, headline: name, full_prompt: text }),
+    });
+    refreshSavedPromptDropdowns();
+    if ($('data-saved-prompts')) loadSavedPromptsAdmin();
+    buttonEl.textContent = row.overwritten ? 'Overwritten \u2713' : 'Saved \u2713';
+    setTimeout(() => { buttonEl.textContent = original; }, 1500);
+  } catch (e) {
+    alert('Failed to save prompt: ' + e.message);
+    buttonEl.textContent = original;
+  } finally {
+    buttonEl.disabled = false;
+  }
+}
+
+$('gen-save-prompt').addEventListener('click', () => saveCurrentPrompt('gen-prompt', 'generate', $('gen-save-prompt')));
+$('edit-save-prompt').addEventListener('click', () => saveCurrentPrompt('edit-prompt', 'edit', $('edit-save-prompt')));
+
+// ── Agent (Qwen3 parses size/model/style right out of the prompt) ─────
+$('agent-go').addEventListener('click', async () => {
+  const message = $('agent-prompt').value.trim();
+  if (!message) return setStatus('agent-status', 'Prompt is required.', 'err');
+
+  $('agent-go').disabled = true;
+  $('agent-result').classList.remove('show');
+  setStatus('agent-status', 'Agent is reading your prompt and setting params…');
+  try {
+    const row = await api('/api/agent/generate', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message })
+    });
+    setStatus('agent-status', 'Done.', 'ok');
+    $('agent-img').src = row.imgbb_url;
+    $('agent-meta').textContent = `${row.model || ''}`;
+    const a = row.agent || {};
+    const size = a.width && a.height ? `${a.width}×${a.height}px${a.dpi ? ` (@${a.dpi} dpi)` : ''}` : (a.aspect_ratio || 'auto');
+    $('agent-detected').textContent =
+      `Detected → model: ${a.model || row.model}, size: ${size}` +
+      (a.style ? `, style: ${a.style}` : '') +
+      (a.format ? `, format: ${a.format}` : '') +
+      (a.num_outputs ? `, outputs: ${a.num_outputs}` : '');
+    $('agent-result').classList.add('show');
+    $('agent-download').dataset.imageUrl = row.imgbb_url;
+    $('agent-copy-prompt').dataset.prompt = row.prompt;
+    loadHistory();
+  } catch (e) {
+    setStatus('agent-status', e.message, 'err');
+  } finally {
+    $('agent-go').disabled = false;
+  }
+});
+
+$('agent-download').addEventListener('click', () => {
+  const url = $('agent-download').dataset.imageUrl;
+  if (url) downloadImage(url);
+});
+
+$('agent-copy-prompt').addEventListener('click', () => {
+  const prompt = $('agent-copy-prompt').dataset.prompt;
+  if (prompt) copyToClipboard(prompt);
+});
+
+// ── Billing ─────────────────────────────────────────────
+function currentMonthValue() {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+}
+$('billing-month').value = currentMonthValue();
+
+function fmtMoney(n) {
+  if (n === null || n === undefined) return '—';
+  return '$' + Number(n).toFixed(2);
+}
+
+async function loadBilling() {
+  const month = $('billing-month').value || currentMonthValue();
+  $('billing-go').disabled = true;
+  $('billing-result').classList.remove('show');
+  setStatus('billing-status', 'Fetching usage…');
+  try {
+    const bill = await api(`/api/billing?month=${encodeURIComponent(month)}`);
+    setStatus('billing-status', 'Done.', 'ok');
+
+    $('billing-total').textContent = fmtMoney(bill.total);
+    const included = bill.plan?.gb_included;
+    $('billing-gb').textContent = `${(bill.used_gb ?? 0).toFixed(2)} GB` + (included != null ? ` / ${included} GB` : '');
+    $('billing-plan').textContent = bill.plan?.price_per_month != null
+      ? `$${bill.plan.price_per_month}/mo`
+      : '—';
+    $('billing-provisional').textContent = bill.invoice_id
+      ? `Finalized invoice ${bill.invoice_id}`
+      : 'This month is still in progress — numbers will keep changing until it closes.';
+
+    const tbody = $('billing-robots-body');
+    tbody.innerHTML = '';
+    const robots = bill.robots || {};
+    const rows = Object.entries(robots).sort((a, b) => (b[1].gb || 0) - (a[1].gb || 0));
+    if (!rows.length) {
+      tbody.innerHTML = '<tr><td colspan="3" class="hint">No usage recorded for this month yet.</td></tr>';
+    } else {
+      for (const [robot, stats] of rows) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${robot}</td><td>${(stats.gb ?? 0).toFixed(3)}</td><td>${(stats.rawGb ?? 0).toFixed(3)}</td>`;
+        tbody.appendChild(tr);
+      }
+    }
+
+    $('billing-result').classList.add('show');
+  } catch (e) {
+    setStatus('billing-status', e.message, 'err');
+  } finally {
+    $('billing-go').disabled = false;
+  }
+}
+
+$('billing-go').addEventListener('click', loadBilling);
+
+// ── Generate ──────────────────────────────────────────
+let genCtl = null;
+async function initGenerate() {
+  const catalog = await api('/api/image/catalog?type=generate');
+  genCtl = buildPanelController({
+    providerSelect: $('gen-provider'),
+    modelSelect: $('gen-model'),
+    paramsEl: $('gen-params'),
+    catalog,
+  });
+  wireSavedPrompts('gen-saved-prompt', 'generate', 'gen-prompt');
+}
+
+$('gen-go').addEventListener('click', async () => {
+  const prompt = $('gen-prompt').value.trim();
+  if (!prompt) return setStatus('gen-status', 'Prompt is required.', 'err');
+  if (!genCtl) return setStatus('gen-status', 'Still loading providers, try again in a second.', 'err');
+
+  const body = { prompt, provider: genCtl.getProvider(), model: genCtl.getModel(), ...genCtl.getParams() };
+
+  $('gen-go').disabled = true;
+  $('gen-result').classList.remove('show');
+  setStatus('gen-status', 'Developing… this can take up to a minute.');
+  try {
+    const row = await api('/api/image/generate', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
+    });
+    setStatus('gen-status', 'Done.', 'ok');
+    $('gen-img').src = row.imgbb_url;
+    $('gen-meta').textContent = `${row.provider} · ${row.model || ''}`;
+    $('gen-result').classList.add('show');
+    $('gen-download').dataset.imageUrl = row.imgbb_url;
+    $('gen-copy-prompt').dataset.prompt = row.prompt;
+    loadHistory();
+  } catch (e) {
+    setStatus('gen-status', e.message, 'err');
+  } finally {
+    $('gen-go').disabled = false;
+  }
+});
+
+// ── Edit ──────────────────────────────────────────────
+let editCtl = null;
+async function initEdit() {
+  const catalog = await api('/api/image/catalog?type=edit');
+  editCtl = buildPanelController({
+    providerSelect: $('edit-provider'),
+    modelSelect: $('edit-model'),
+    paramsEl: $('edit-params'),
+    catalog,
+  });
+  wireSavedPrompts('edit-saved-prompt', 'edit', 'edit-prompt');
+}
+
+let editFileDataUrl = null;
+
+$('edit-file').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  $('edit-file-name').textContent = file.name;
+  $('edit-file-hint').style.display = 'block';
+  const reader = new FileReader();
+  reader.onload = (evt) => {
+    editFileDataUrl = evt.target.result;
+    $('edit-url').value = '';
+  };
+  reader.readAsDataURL(file);
+});
+
+$('edit-go').addEventListener('click', async () => {
+  let image_url = $('edit-url').value.trim();
+  const prompt = $('edit-prompt').value.trim();
+
+  if (!image_url && !editFileDataUrl) return setStatus('edit-status', 'Source image URL or file upload is required.', 'err');
+  if (!prompt) return setStatus('edit-status', 'Edit instruction is required.', 'err');
+  if (!editCtl) return setStatus('edit-status', 'Still loading providers, try again in a second.', 'err');
+
+  const body = {
+    prompt,
+    provider: editCtl.getProvider(), model: editCtl.getModel(), ...editCtl.getParams(),
+    ...(image_url ? { image_url } : { image_data_url: editFileDataUrl }),
+  };
+
+  $('edit-go').disabled = true;
+  $('edit-result').classList.remove('show');
+  setStatus('edit-status', 'Developing edit… this can take up to a minute.');
+  try {
+    const row = await api('/api/image/edit', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
+    });
+    setStatus('edit-status', 'Done.', 'ok');
+    $('edit-img').src = row.imgbb_url;
+    $('edit-meta').textContent = `${row.provider} · ${row.model || ''}`;
+    $('edit-result').classList.add('show');
+    $('edit-download').dataset.imageUrl = row.imgbb_url;
+    $('edit-copy-prompt').dataset.prompt = row.prompt;
+    loadHistory();
+  } catch (e) {
+    setStatus('edit-status', e.message, 'err');
+  } finally {
+    $('edit-go').disabled = false;
+  }
+});
+
+// ── Chat ──────────────────────────────────────────────
+let conversationId = null;
+
+function renderMessage(role, content, timestamp) {
+  const log = $('chat-log');
+  const empty = log.querySelector('.chat-empty');
+  if (empty) empty.remove();
+
+  const div = document.createElement('div');
+  div.className = 'msg ' + role;
+  const avatar = role === 'user' ? '👤' : '🤖';
+  const label = role === 'user' ? 'You' : 'Assistant';
+  const time = timestamp ? new Date(timestamp).toLocaleTimeString() : new Date().toLocaleTimeString();
+  div.innerHTML = `
+    <div class="who"><span class="avatar">${avatar}</span> ${label} <span class="msg-time">${time}</span></div>
+    <div class="body">${content}</div>
+  `;
+  log.appendChild(div);
+  log.scrollTop = log.scrollHeight;
+}
+
+function setTyping(show) {
+  const indicator = $('typing-indicator');
+  if (show) {
+    indicator.classList.add('show');
+    $('chat-log').scrollTop = $('chat-log').scrollHeight;
+  } else {
+    indicator.classList.remove('show');
+  }
+}
+
+$('chat-new').addEventListener('click', () => {
+  conversationId = null;
+  $('chat-log').innerHTML = `
+    <div class="chat-empty">
+      <span class="empty-icon">💬</span>
+      No messages yet.
+      <div class="empty-hint">Start a conversation with the AI</div>
+    </div>
+  `;
+  setStatus('chat-status', 'Started a new conversation.');
+});
+
+$('chat-send').addEventListener('click', async () => {
+  const message = $('chat-input').value.trim();
+  if (!message) return;
+  renderMessage('user', message);
+  $('chat-input').value = '';
+  $('chat-send').disabled = true;
+  setTyping(true);
+  setStatus('chat-status', 'Thinking…');
+  try {
+    const data = await api('/api/chat', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message, conversationId })
+    });
+    conversationId = data.conversationId;
+    setTyping(false);
+    renderMessage('assistant', data.reply);
+    setStatus('chat-status', '');
+  } catch (e) {
+    setTyping(false);
+    setStatus('chat-status', e.message, 'err');
+  } finally {
+    $('chat-send').disabled = false;
+  }
+});
+
+$('chat-input').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    $('chat-send').click();
+  }
+});
+
+$('chat-input').addEventListener('input', function() {
+  this.style.height = 'auto';
+  this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+});
+
+// ── Prompt Generator ──────────────────────────────────
+// Data state
+let promptData = {
+  subjects: [],
+  styles: [],
+  lightings: [],
+  moods: [],
+  tags: []
+};
+
+// Load data from DB
+async function loadPromptData() {
+  try {
+    const data = await api('/api/prompt-data');
+    promptData = data;
+    refreshAllDropdowns();
+    renderDataItems();
+    renderTags();
+  } catch (e) {
+    console.error('Failed to load prompt data:', e.message);
+    // Use empty data if API fails
+  }
+}
+
+// Refresh all dropdowns with current data
+function refreshAllDropdowns() {
+  fillSelect($('pg-subject'), promptData.subjects);
+  fillSelect($('pg-style'), promptData.styles);
+  fillSelect($('pg-lighting'), promptData.lightings);
+  fillSelect($('pg-mood'), promptData.moods);
+}
+
+// Render data items in manage tab
+function renderDataItems() {
+  const categories = {
+    subjects: 'data-subjects',
+    styles: 'data-styles',
+    lightings: 'data-lighting',
+    moods: 'data-moods',
+    tags: 'data-tags'
+  };
+
+  Object.keys(categories).forEach(key => {
+    const container = $(categories[key]);
+    const items = promptData[key] || [];
+    if (!items.length) {
+      container.innerHTML = '<div class="data-empty">No items yet. Add one above.</div>';
+      return;
+    }
+    container.innerHTML = items.map(item => `
+      <div class="data-item" data-id="${item.id}">
+        <span class="item-value">${item.value}</span>
+        <button class="item-delete" data-id="${item.id}" data-category="${key}">×</button>
+      </div>
+    `).join('');
+  });
+}
+
+// Render tags in generate tab
+function renderTags() {
+  const container = $('pg-tags-container');
+  const tags = promptData.tags || [];
+  if (!tags.length) {
+    container.innerHTML = '<div class="data-empty">No tags available. Add some in Manage Data.</div>';
+    return;
+  }
+  container.innerHTML = tags.map(tag => `
+    <span class="promptgen-tag" data-id="${tag.id}">${tag.value}</span>
+  `).join('');
+}
+
+// Generate prompt
+function generatePrompt() {
+  const subjectId = $('pg-subject').value;
+  const styleId = $('pg-style').value;
+  const lightingId = $('pg-lighting').value;
+  const moodId = $('pg-mood').value;
+  const details = $('pg-details').value.trim();
+  
+  const activeTags = document.querySelectorAll('#pg-tags-container .promptgen-tag.active');
+  const tagIds = Array.from(activeTags).map(el => el.dataset.id);
+
+  const selected = {
+    subject_id: subjectId || null,
+    style_id: styleId || null,
+    lighting_id: lightingId || null,
+    mood_id: moodId || null,
+    tag_ids: tagIds,
+    additional: details
+  };
+
+  return selected;
+}
+
+// Build prompt preview from selected values
+function buildPromptPreview() {
+  const subjectId = $('pg-subject').value;
+  const styleId = $('pg-style').value;
+  const lightingId = $('pg-lighting').value;
+  const moodId = $('pg-mood').value;
+  const details = $('pg-details').value.trim();
+  
+  const activeTags = document.querySelectorAll('#pg-tags-container .promptgen-tag.active');
+  
+  const subject = promptData.subjects.find(s => s.id == subjectId);
+  const style = promptData.styles.find(s => s.id == styleId);
+  const lighting = promptData.lightings.find(l => l.id == lightingId);
+  const mood = promptData.moods.find(m => m.id == moodId);
+  const tags = activeTags.map(el => el.textContent);
+
+  let parts = [];
+  if (subject) parts.push(subject.value);
+  if (style) parts.push(style.value);
+  if (lighting) parts.push(lighting.value);
+  if (mood) parts.push(mood.value);
+  if (details) parts.push(details);
+  if (tags.length) parts.push(tags.join(', '));
+
+  return parts.join(', ');
+}
+
+function updatePromptPreview() {
+  const prompt = buildPromptPreview();
+  const preview = $('pg-preview');
+  if (prompt) {
+    preview.textContent = prompt;
+    preview.classList.remove('empty');
+    $('pg-char-count').textContent = prompt.length + ' characters';
+  } else {
+    preview.innerHTML = `<span>Select some options to generate a prompt</span>`;
+    preview.classList.add('empty');
+    $('pg-char-count').textContent = '0 characters';
+  }
+}
+
+$('pg-generate').addEventListener('click', async () => {
+  const selected = generatePrompt();
+  const preview = $('pg-preview');
+  preview.textContent = 'Generating...';
+  preview.classList.remove('empty');
+  
+  try {
+    const response = await api('/api/prompt/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(selected)
+    });
+    preview.textContent = response.prompt;
+    $('pg-char-count').textContent = response.prompt.length + ' characters';
+  } catch (e) {
+    // Fallback: use local preview
+    const fallback = buildPromptPreview();
+    if (fallback) {
+      preview.textContent = fallback;
+      $('pg-char-count').textContent = fallback.length + ' characters';
+    } else {
+      preview.innerHTML = `<span>Please select at least one option</span>`;
+      preview.classList.add('empty');
+    }
+  }
+});
+
+$('pg-copy').addEventListener('click', () => {
+  const prompt = $('pg-preview').textContent;
+  if (prompt && !$('pg-preview').classList.contains('empty') && prompt !== 'Generating...') {
+    copyToClipboard(prompt);
+  }
+});
+
+$('pg-clear').addEventListener('click', () => {
+  // Reset dropdowns to None
+  document.querySelectorAll('#panel-promptgen select').forEach(sel => {
+    sel.value = '';
+  });
+  $('pg-details').value = '';
+  // Deselect all tags
+  document.querySelectorAll('#pg-tags-container .promptgen-tag.active').forEach(el => {
+    el.classList.remove('active');
+  });
+  const preview = $('pg-preview');
+  preview.innerHTML = `<span>Select your options and click<br><strong>✨ Generate Prompt</strong></span>`;
+  preview.classList.add('empty');
+  $('pg-char-count').textContent = '0 characters';
+});
+
+$('pg-use').addEventListener('click', () => {
+  const prompt = $('pg-preview').textContent;
+  if (prompt && !$('pg-preview').classList.contains('empty') && prompt !== 'Generating...') {
+    const genTab = document.querySelector('nav button[data-panel="generate"]');
+    if (genTab) {
+      genTab.click();
+      $('gen-prompt').value = prompt;
+      $('gen-prompt').dispatchEvent(new Event('input'));
+    }
+  }
+});
+
+// Tag toggle
+document.addEventListener('click', (e) => {
+  const tag = e.target.closest('.promptgen-tag');
+  if (tag && tag.closest('#pg-tags-container')) {
+    tag.classList.toggle('active');
+    updatePromptPreview();
+  }
+});
+
+// Dropdown change updates preview
+['pg-subject', 'pg-style', 'pg-lighting', 'pg-mood', 'pg-details'].forEach(id => {
+  $(id).addEventListener('change', updatePromptPreview);
+  $(id).addEventListener('input', updatePromptPreview);
+});
+
+// ── Manage Data ──────────────────────────────────────
+async function addDataItem(category, value) {
+  try {
+    const response = await api('/api/prompt-data', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: category, value })
+    });
+    await loadPromptData();
+    return true;
+  } catch (e) {
+    console.error('Failed to add item:', e.message);
+    return false;
+  }
+}
+
+async function deleteDataItem(category, id) {
+  try {
+    await api(`/api/prompt-data/${id}`, {
+      method: 'DELETE'
+    });
+    await loadPromptData();
+    return true;
+  } catch (e) {
+    console.error('Failed to delete item:', e.message);
+    return false;
+  }
+}
+
+// Handle add/delete in manage tab
+document.addEventListener('click', async (e) => {
+  const addBtn = e.target.closest('.data-add');
+  if (addBtn) {
+    const card = addBtn.closest('.data-category-card');
+    const input = card.querySelector('.data-input');
+    const value = input.value.trim();
+    if (!value) return;
+    const category = card.dataset.category;
+    const success = await addDataItem(category, value);
+    if (success) {
+      input.value = '';
+      updatePromptPreview();
+    }
+  }
+
+  const deleteBtn = e.target.closest('.item-delete');
+  if (deleteBtn) {
+    const id = deleteBtn.dataset.id;
+    const category = deleteBtn.dataset.category;
+    await deleteDataItem(category, id);
+    updatePromptPreview();
+  }
+});
+
+// Enter key in manage data inputs (skip the saved-prompts card — it has its
+// own handler below since it needs two fields, not one).
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    const input = e.target.closest('.data-input');
+    if (input && !input.closest('#saved-prompts-card')) {
+      const card = input.closest('.data-category-card');
+      const addBtn = card.querySelector('.data-add');
+      if (addBtn) addBtn.click();
+    }
+  }
+});
+
+// ── Manage Data: Saved Prompts (admin for the "pick a saved prompt" dropdown) ──
+async function loadSavedPromptsAdmin() {
+  const container = $('data-saved-prompts');
+  try {
+    const [genRows, editRows] = await Promise.all([
+      api('/api/prompts?module=generate'),
+      api('/api/prompts?module=edit'),
+    ]);
+    const rows = [...genRows.map(r => ({ ...r, module_key: 'generate' })), ...editRows.map(r => ({ ...r, module_key: 'edit' }))];
+    if (!rows.length) {
+      container.innerHTML = '<div class="data-empty">No saved prompts yet. Add one above.</div>';
+      return;
+    }
+    container.innerHTML = rows.map(r => `
+      <div class="data-item" data-id="${r.id}">
+        <span class="item-value">[${r.module_key}] ${r.headline}</span>
+        <button class="sp-delete" data-id="${r.id}">×</button>
+      </div>
+    `).join('');
+  } catch (e) {
+    console.error('Failed to load saved prompts:', e.message);
+    container.innerHTML = '<div class="data-empty">Couldn\u2019t load saved prompts.</div>';
+  }
+}
+
+$('sp-add').addEventListener('click', async () => {
+  const moduleKey = $('sp-module').value;
+  const headline = $('sp-headline').value.trim();
+  const fullPrompt = $('sp-full-prompt').value.trim();
+  if (!headline || !fullPrompt) return;
+  try {
+    await api('/api/prompts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ module: moduleKey, headline, full_prompt: fullPrompt }),
+    });
+    $('sp-headline').value = '';
+    $('sp-full-prompt').value = '';
+    await loadSavedPromptsAdmin();
+    refreshSavedPromptDropdowns();
+  } catch (e) {
+    console.error('Failed to add saved prompt:', e.message);
+  }
+});
+
+document.addEventListener('click', async (e) => {
+  const delBtn = e.target.closest('.sp-delete');
+  if (!delBtn) return;
+  try {
+    await api(`/api/prompts/${delBtn.dataset.id}`, { method: 'DELETE' });
+    await loadSavedPromptsAdmin();
+    refreshSavedPromptDropdowns();
+  } catch (e2) {
+    console.error('Failed to delete saved prompt:', e2.message);
+  }
+});
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && e.target.closest('#saved-prompts-card')) {
+    $('sp-add').click();
+  }
+});
+
+// ── Prompt Gen Tabs ──────────────────────────────────
+document.querySelectorAll('.promptgen-tabs button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.promptgen-tabs button').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.promptgen-tab-content').forEach(t => t.classList.remove('active'));
+    btn.classList.add('active');
+    $('pg-tab-' + btn.dataset.pgTab).classList.add('active');
+    // Refresh data when switching to manage tab
+    if (btn.dataset.pgTab === 'manage') {
+      loadPromptData();
+      loadSavedPromptsAdmin();
+    }
+  });
+});
+
+// ── History ──────────────────────────────────────────
+async function loadHistory() {
+  try {
+    const rows = await api('/api/history/images?limit=24');
+    const frames = $('frames');
+    if (!rows.length) { frames.innerHTML = '<div class="empty">Nothing developed yet.</div>'; return; }
+    frames.innerHTML = '';
+    for (const r of rows) {
+      const div = document.createElement('div');
+      div.className = 'frame';
+      div.innerHTML = `
+        <span class="tag">${r.type} · ${r.provider}</span>
+        <img src="${r.imgbb_url}" loading="lazy" />
+        <div class="frame-prompt" title="${(r.prompt||'').replace(/"/g,'&quot;')}">${r.prompt || ''}</div>
+        <div class="actions">
+          <button class="view-btn" data-id="${r.id}" data-url="${r.imgbb_url}" data-prompt="${(r.prompt||'').replace(/"/g,'&quot;')}" data-provider="${r.provider}" data-model="${r.model||''}">View</button>
+          <button class="download-btn" data-url="${r.imgbb_url}">Download</button>
+        </div>
+      `;
+      frames.appendChild(div);
+    }
+  } catch (e) { /* silent */ }
+}
+
+// ── Download ─────────────────────────────────────────
+async function downloadImage(url, filename = 'image.png') {
+  try {
+    const response = await fetch(url);
+    const blob = await response.blob();
+    const objectUrl = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = objectUrl;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(objectUrl);
+  } catch (e) {
+    window.open(url, '_blank');
+  }
+}
+
+// ── Copy ─────────────────────────────────────────────
+let copyTimeout = null;
+function showCopyFeedback() {
+  const fb = $('copy-feedback');
+  fb.classList.add('show');
+  clearTimeout(copyTimeout);
+  copyTimeout = setTimeout(() => fb.classList.remove('show'), 1500);
+}
+
+async function copyToClipboard(text) {
+  try {
+    await navigator.clipboard.writeText(text);
+    showCopyFeedback();
+  } catch (e) {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    showCopyFeedback();
+  }
+}
+
+// ── Modal ─────────────────────────────────────────────
+let currentModalData = null;
+
+function openModal(data) {
+  currentModalData = data;
+  $('modal-img').src = data.url;
+  $('modal-prompt').textContent = data.prompt || 'No prompt saved.';
+  $('modal-meta').textContent = `${data.provider || ''} · ${data.model || ''}`.replace(/^ · /, '').trim();
+  $('modal-download').dataset.imageUrl = data.url;
+  $('modal-copy-prompt').dataset.prompt = data.prompt || '';
+  $('image-modal').classList.add('show');
+}
+
+function closeModal() {
+  $('image-modal').classList.remove('show');
+  currentModalData = null;
+}
+
+$('modal-close').addEventListener('click', closeModal);
+$('image-modal').addEventListener('click', (e) => {
+  if (e.target === $('image-modal')) closeModal();
+});
+
+$('modal-download').addEventListener('click', () => {
+  if (currentModalData && currentModalData.url) {
+    downloadImage(currentModalData.url);
+  }
+});
+
+$('modal-copy-prompt').addEventListener('click', () => {
+  if (currentModalData && currentModalData.prompt) {
+    copyToClipboard(currentModalData.prompt);
+  }
+});
+
+// ── Download & copy buttons ───────────────────────────
+$('gen-download').addEventListener('click', () => {
+  const url = $('gen-download').dataset.imageUrl;
+  if (url) downloadImage(url);
+});
+
+$('gen-copy-prompt').addEventListener('click', () => {
+  const prompt = $('gen-copy-prompt').dataset.prompt;
+  if (prompt) copyToClipboard(prompt);
+});
+
+$('edit-download').addEventListener('click', () => {
+  const url = $('edit-download').dataset.imageUrl;
+  if (url) downloadImage(url);
+});
+
+$('edit-copy-prompt').addEventListener('click', () => {
+  const prompt = $('edit-copy-prompt').dataset.prompt;
+  if (prompt) copyToClipboard(prompt);
+});
+
+// ── History frame actions ─────────────────────────────
+$('frames').addEventListener('click', (e) => {
+  const viewBtn = e.target.closest('.view-btn');
+  const downloadBtn = e.target.closest('.download-btn');
+  
+  if (viewBtn) {
+    openModal({
+      id: viewBtn.dataset.id,
+      url: viewBtn.dataset.url,
+      prompt: viewBtn.dataset.prompt,
+      provider: viewBtn.dataset.provider,
+      model: viewBtn.dataset.model,
+    });
+  } else if (downloadBtn) {
+    downloadImage(downloadBtn.dataset.url);
+  }
+});
+
+// ── Init ──────────────────────────────────────────────
+initGenerate();
+initEdit();
+loadPromptData();
+loadHistory();
+</script>
+</body>
+</html>
