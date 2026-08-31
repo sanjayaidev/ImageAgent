@@ -730,6 +730,18 @@
     <label>Prompt <span class="hint">(type the size right into the sentence — pixels, aspect ratio, or a real-world size like "7x4 feet", "8.5x11 inch", "50x70cm" — e.g. "a lighthouse at dusk, 16:9" or "a poster of a fox, 7x4 feet, gpt image")</span></label>
     <textarea id="agent-prompt" placeholder="A neon-lit street market at night, rain-slicked pavement reflecting signage, 7x4 feet poster"></textarea>
 
+    <label>Reference image (optional)</label>
+    <div class="row" style="margin-bottom:0;">
+      <div>
+        <input type="text" id="agent-url" placeholder="https://..." />
+      </div>
+      <div style="display:flex;align-items:center;">
+        <span style="color:#8a8378;font-size:12px;margin:0 8px;">or</span>
+        <input type="file" id="agent-file" accept="image/*" style="font-size:12px;" />
+      </div>
+    </div>
+    <div class="hint" id="agent-file-hint" style="display:none;">Using uploaded file: <span id="agent-file-name"></span></div>
+
     <button class="go" id="agent-go">✨ Let the agent figure it out</button>
     <div class="status" id="agent-status"></div>
     <div class="result" id="agent-result">
@@ -1251,12 +1263,20 @@ $('agent-go').addEventListener('click', async () => {
   const message = $('agent-prompt').value.trim();
   if (!message) return setStatus('agent-status', 'Prompt is required.', 'err');
 
+  let agent_url = $('agent-url').value.trim();
+  if (!agent_url && !agentFileDataUrl) {
+    // No reference image — pure generation
+  }
+
   $('agent-go').disabled = true;
   $('agent-result').classList.remove('show');
   setStatus('agent-status', 'Agent is reading your prompt and setting params…');
   try {
     const row = await api('/api/agent/generate', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message })
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({
+        message,
+        ...(agent_url ? { image_url: agent_url } : { image_data_url: agentFileDataUrl }),
+      })
     });
     setStatus('agent-status', 'Done.', 'ok');
     $('agent-img').src = row.imgbb_url;
@@ -1409,6 +1429,21 @@ $('edit-file').addEventListener('change', async (e) => {
   reader.onload = (evt) => {
     editFileDataUrl = evt.target.result;
     $('edit-url').value = '';
+  };
+  reader.readAsDataURL(file);
+});
+
+let agentFileDataUrl = null;
+
+$('agent-file').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  $('agent-file-name').textContent = file.name;
+  $('agent-file-hint').style.display = 'block';
+  const reader = new FileReader();
+  reader.onload = (evt) => {
+    agentFileDataUrl = evt.target.result;
+    $('agent-url').value = '';
   };
   reader.readAsDataURL(file);
 });
