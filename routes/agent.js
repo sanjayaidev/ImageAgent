@@ -2,6 +2,7 @@ const express = require('express');
 const AlibabaProvider = require('../providers/alibaba');
 const TransloaditProvider = require('../providers/transloadit');
 const { parseImageRequest } = require('../providers/qwen-agent');
+const { uploadToImgbb } = require('../services/imgbb');
 const { transloadAndSave, requireEnv } = require('../services/save-image');
 
 const router = express.Router();
@@ -18,23 +19,35 @@ function getTransloadit() {
 }
 
 // POST /api/agent/generate
-// body: { message } — a single free-text line, e.g.
-//   "a lighthouse at dusk, storm clouds, 16:9"
-//   "portrait of a fox in the snow, 1024x1536, gpt image"
-// Qwen3 reads it, splits out the visual prompt from any size/aspect-ratio/
-// model/style directives, and the resulting image is generated with
-// Transloadit (nano-banana family or gpt-image-2 only).
+// body: { message, image_url?, image_data_url? } — a single free-text line,
+// e.g. "a lighthouse at dusk, storm clouds, 16:9" or
+// "portrait of a fox in the snow, 1024x1536, gpt image", optionally with a
+// reference image attached (image_url for a public URL, or image_data_url
+// for a base64 data: URL from a file upload). Qwen3 reads the message and
+// splits out the visual prompt from any size/aspect-ratio/model/style
+// directives; if a reference image is attached, the result is an edit of
+// that image instead of a fresh generation.
 router.post('/generate', async (req, res) => {
   try {
-    const { message } = req.body || {};
+    const { message, image_url, image_data_url } = req.body || {};
     if (!message || !message.trim()) return res.status(400).json({ error: 'message is required' });
+
+    // Resolve the reference image (if any) to a public URL up front —
+    // Transloadit's /http/import robot can't accept a base64 data URI
+    // directly, so an uploaded file is hosted on imgbb first.
+    let sourceUrl = image_url && image_url.trim();
+    if (!sourceUrl && image_data_url && image_data_url.trim()) {
+      const imgbbKey = requireEnv('IMGBB_API_KEY');
+      const uploadedSource = await uploadToImgbb(imgbbKey, { dataUrl: image_data_url });
+      sourceUrl = uploadedSource.url;
+    }
 
     const alibaba = getAlibaba();
     const parsed = await parseImageRequest(alibaba, message.trim());
 
     const transloadit = getTransloadit();
     const isCustomSize = !!(parsed.width && parsed.height);
-    const result = await transloadit.generateImage(parsed.prompt, {
+    const sizeOptions = {
       model: parsed.model,
       aspect_ratio: isCustomSize ? undefined : parsed.aspect_ratio,
       width: isCustomSize ? parsed.width : undefined,
@@ -42,13 +55,18 @@ router.post('/generate', async (req, res) => {
       style: parsed.style || undefined,
       format: parsed.format || undefined,
       num_outputs: parsed.num_outputs || undefined,
-    });
+    };
+
+    const result = sourceUrl
+      ? await transloadit.editImage(parsed.prompt, sourceUrl, sizeOptions)
+      : await transloadit.generateImage(parsed.prompt, sizeOptions);
 
     const saved = await transloadAndSave({
-      type: 'generate',
+      type: sourceUrl ? 'edit' : 'generate',
       prompt: parsed.prompt,
       provider: 'transloadit',
       model: parsed.model,
+      sourceImageUrl: sourceUrl || undefined,
       providerImageUrl: result.imageUrl,
       parameters: {
         aspect_ratio: parsed.aspect_ratio,
